@@ -1,0 +1,6 @@
+node_modules/
+qq-bridge/data/
+qq-bridge/.env
+qq-bridge/inbox/
+*.log
+*.tgz
