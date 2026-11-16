@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>玉子控制台</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" href="/favicon.png" />
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b23; --line:#242c3a; --text:#e6edf6; --dim:#8b98ab;
+    --ok:#3ddc84; --warn:#ffbe4d; --bad:#ff5d5d; --accent:#5aa9ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 700px at 15% -10%, #1b2740 0%, var(--bg) 55%);
+    color:var(--text);font:14px/1.55 "Microsoft YaHei UI","Microsoft YaHei",system-ui,sans-serif}
+  .wrap{max-width:1240px;margin:0 auto;padding:18px 20px 40px}
+  header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+  .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#2b6cb0,#8b7bff);overflow:hidden;
+    box-shadow:0 4px 14px #2b6cb055;display:grid;place-items:center;font-weight:700}
+  .logo img{width:100%;height:100%;object-fit:cover;display:block}
+  h1{font-size:17px;margin:0;letter-spacing:.5px}
+  .sub{color:var(--dim);font-size:12px}
+  .spacer{flex:1}
+  .chip{background:#1a2230;border:1px solid var(--line);border-radius:999px;padding:4px 11px;color:var(--dim);font-size:12px}
+  nav{display:flex;gap:6px;margin:0 0 14px;flex-wrap:wrap}
+  nav button{background:transparent;border:1px solid transparent;color:var(--dim);padding:7px 13px;border-radius:9px;cursor:pointer;font:inherit}
+  nav button:hover{background:#1a2230;color:var(--text)}
+  nav button.on{background:#1d2838;border-color:#2b3a52;color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .card{background:linear-gradient(180deg,var(--panel),#131922);border:1px solid var(--line);border-radius:14px;padding:14px 15px}
+  .row{display:flex;align-items:center;gap:10px}
+  .dot{width:9px;height:9px;border-radius:50%;background:#4b5563;flex:none}
+  .dot.ok{background:var(--ok);box-shadow:0 0 0 4px #3ddc8422}
+  .dot.bad{background:var(--bad);box-shadow:0 0 0 4px #ff5d5d22}
+  .title{font-weight:600}
+  .desc{color:var(--dim);font-size:12px;margin-top:2px}
+  .btns{display:flex;gap:7px;margin-top:12px}
+  button.act{flex:1;background:#1e2836;border:1px solid #2b3a52;color:var(--text);padding:7px 8px;border-radius:9px;cursor:pointer;font:inherit}
+  button.act:hover{background:#26344a}
+  button.act.pri{background:#1c3a5e;border-color:#2f5787}
+  button.act.dan:hover{background:#4a2226;border-color:#6d3038}
+  button.act:disabled{opacity:.45;cursor:not-allowed}
+  .kv{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-top:8px}
+  .kv b{color:var(--text);font-weight:600}
+  .sec{margin-top:20px}
+  .sec h2{font-size:14px;margin:0 0 10px;color:#c9d6e8;font-weight:600}
+  .logtabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+  .logtabs button{background:#151c26;border:1px solid var(--line);color:var(--dim);padding:5px 11px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px}
+  .logtabs button.on{background:#20304a;border-color:#33507a;color:#fff}
+  pre.log{background:#0b0f15;border:1px solid var(--line);border-radius:12px;padding:12px 14px;height:290px;overflow:auto;
+    font:12px/1.6 Consolas,"Cascadia Mono",monospace;color:#b9c7da;white-space:pre-wrap;word-break:break-all;margin:0}
+  .toast{position:fixed;right:20px;bottom:20px;background:#22304a;border:1px solid #33507a;color:#fff;padding:11px 15px;
+    border-radius:11px;box-shadow:0 10px 30px #0008;opacity:0;transform:translateY(8px);transition:.22s;max-width:460px;font-size:13px;z-index:99}
+  .toast.show{opacity:1;transform:none}
+  .qrbox{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .qrbox img{width:190px;height:190px;background:#fff;border-radius:10px;padding:6px}
+  .hint{color:var(--dim);font-size:12px;line-height:1.7}
+  .hide{display:none!important}
+  footer{margin-top:26px;color:#5d6b80;font-size:12px;text-align:center}
+  input,select,textarea{background:#0f141c;border:1px solid #2b3a52;color:var(--text);border-radius:9px;padding:7px 10px;font:inherit;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:#3f6699}
+  textarea{resize:vertical;min-height:64px;width:100%}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .filters input[type=search]{flex:1;min-width:200px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #1f2734;vertical-align:top}
+  th{color:var(--dim);font-weight:500;font-size:12px;position:sticky;top:0;background:#141a23}
+  tbody tr:hover{background:#171e29}
+  .tblwrap{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:12px}
+  .t-time{color:var(--dim);white-space:nowrap;font-family:Consolas,monospace;font-size:12px;width:132px}
+  .t-who{width:120px;color:#a9c4e8;white-space:nowrap}
+  .t-role{width:60px}
+  .mine td{background:#131c2a}
+  .badge{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid #2b3a52;color:var(--dim)}
+  .badge.g{color:#7ee2a8;border-color:#2f6b4a;background:#12281d}
+  .pager{display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--dim);font-size:12px}
+  .dbg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+  .dbg .btns{margin-top:10px}
+  .dbg label{display:block;color:var(--dim);font-size:12px;margin:8px 0 4px}
+  .dbg input,.dbg select{width:100%}
+  .res{margin-top:10px;font:12px/1.55 Consolas,monospace;color:#9fb6d0;background:#0b0f15;border:1px solid var(--line);
+    border-radius:9px;padding:9px 11px;max-height:190px;overflow:auto;white-space:pre-wrap;word-break:break-all}
+  .empty{color:var(--dim);padding:26px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><img src="/favicon.png" alt="玉子" /></div>
+    <div>
+      <h1>玉子控制台</h1>
+      <div class="sub">NapCat · 玉子 bot · 空间监听 · DSH 统一管理</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="act" style="max-width:96px;margin-right:10px" onclick="refreshAll()" title="刷新状态、进程、当前页数据">↻ 刷新</button>
+    <div class="chip" id="sysinfo">连接中…</div>
+  </header>
+
+  <nav>
+    <button data-page="home" class="on">总览</button>
+    <button data-page="chat">聊天记录</button>
+    <button data-page="debug">调试台</button>
+    <button data-page="plan">日程 · 天气</button>
+    <button data-page="plugin">插件 · 升级</button>
+        <button data-page="persona">人格</button>
+    <button data-page="setting">设置</button>
+  </nav>
+
+  <!-- ========== 总览 ========== -->
+  <section id="page-home">
+    <div class="grid" id="svcGrid"></div>
+
+    <div class="sec" id="qrSec" style="display:none">
+      <h2>登录二维码</h2>
+      <div class="card qrbox">
+        <img id="qrImg" alt="二维码" style="width:220px;height:220px;image-rendering:pixelated;background:#fff;border-radius:8px;padding:6px" />
+        <div class="hint mono" id="qrMsg"></div>
+        <div class="hint">手机 QQ 扫码登录 <b id="qrUin">10001</b>。<br />扫完码这个框会自动消失。<br /><span id="qrTime" class="mono"></span></div>
+        <div class="btns" style="max-width:260px">
+          <button class="act pri" onclick="freshQr()">换一张二维码</button>
+        </div>
+        <div class="hint" style="margin-top:8px">二维码 2 分钟左右会失效，扫不动就点上面这个按钮，不用重启 NapCat。</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>全部操作</h2>
+      <div class="card">
+        <div class="btns">
+          <button class="act pri" onclick="allAct('restart')">全部重启</button>
+          <button class="act" onclick="allAct('start')">全部启动</button>
+          <button class="act dan" onclick="allAct('stop')">全部停止</button>
+        </div>
+        <div class="kv"><span>全部停止会关掉 QQ 协议端与玉子，需要时再手动拉起</span></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>日志</h2>
+      <div class="logtabs" id="logTabs">
+        <button data-log="boot" class="on">开机自检</button>
+        <button data-log="bot">玉子 bot</button>
+        <button data-log="qzone">空间监听</button>
+        <button data-log="console">控制台</button>
+        <button data-log="tray">托盘</button>
+      </div>
+      <pre class="log" id="logBox">加载中…</pre>
+    </div>
+  </section>
+
+  <!-- ========== 聊天记录 ========== -->
+  <section id="page-chat" class="hide">
+    <div class="card">
+      <div class="filters">
+        <select id="fCh"><option value="qqall">QQ（全部，不含电脑端）</option><option value="">所有频道</option></select>
+        <input type="search" id="fQ" placeholder="搜索内容…（回车查询）" />
+        <input type="date" id="fFrom" title="起始日期" />
+        <input type="date" id="fTo" title="结束日期" />
+        <button class="act" style="max-width:90px" onclick="loadChat(0)">查询</button>
+        <button class="act" style="max-width:90px" onclick="exportChat()">导出</button>
+      </div>
+      <div class="pager"><span id="chatStat">…</span><span class="spacer"></span>
+        <button class="act" style="max-width:78px" onclick="chatPage(-1)">上一页</button>
+        <button class="act" style="max-width:78px" onclick="chatPage(1)">下一页</button>
+      </div>
+      <div class="tblwrap" style="margin-top:10px">
+        <table>
+          <thead><tr><th class="t-time">时间</th><th class="t-who">对象</th><th class="t-role">角色</th><th>内容</th></tr></thead>
+          <tbody id="chatBody"><tr><td colspan="4" class="empty">载入中…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 调试台 ========== -->
+  <section id="page-debug" class="hide">
+    <div class="card">
+      <div class="row"><span class="dot" id="dbgDot"></span><div class="title">连接信息</div></div>
+      <div class="dbg-grid" style="margin-top:10px">
+        <div><div class="desc">登录账号</div><div id="dbgLogin" class="title">…</div></div>
+        <div><div class="desc">好友列表</div><div id="dbgFriends" class="hint">…</div></div>
+        <div><div class="desc">群列表</div><div id="dbgGroups" class="hint">…</div></div>
+        <div><div class="desc">白名单（自动回复）</div><div id="dbgWhite" class="hint">…</div></div>
+      </div>
+      <div class="btns"><button class="act pri" onclick="loadDebug()">刷新连接信息</button></div>
+    </div>
+
+    <div class="card">
+      <div class="row"><span class="dot" id="grpDot"></span><div class="title">群聊白名单（这里加的群，玉子会自动回话）</div></div>
+      <div class="desc" style="margin-top:8px">输入群号回车或点「加入」。加进来以后，这个群里任何人说话玉子都会接——不想接就把「回复方式」改成「只回 @」或「不回」。</div>
+      <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+        <input id="grpId" class="inp" style="max-width:200px" placeholder="群号，例如 123456789" />
+        <button class="act pri" style="width:auto;padding:8px 18px;flex:0 0 auto" onclick="grpAdd()">加入白名单</button>
+        <select id="grpMode" class="inp" style="max-width:180px;flex:0 0 auto" onchange="grpMode()">
+          <option value="all">回复方式：每句都回</option>
+          <option value="mention">回复方式：只回 @</option>
+          <option value="off">回复方式：不回</option>
+        </select>
+        <input id="grpCd" class="inp" style="max-width:110px;flex:0 0 auto" placeholder="冷却秒" onchange="grpMode()" />
+      </div>
+      <div id="grpList" class="hint" style="margin-top:12px">正在读…</div>
+      <div id="grpMsg" class="res">等待操作</div>
+    </div>
+
+    <div class="sec">
+      <h2>消息</h2>
+      <div class="dbg-grid">
+        <div class="card dbg">
+          <div class="title">发私聊</div>
+          <label>QQ 号</label><input id="dMsgUid" value="" placeholder="留空 = 发给主人" />
+          <label>内容</label><textarea id="dMsgText" placeholder="测试消息…"></textarea>
+          <div class="btns"><button class="act pri" onclick="dbgSend()">发送</button></div>
+          <div class="res" id="dMsgRes">等待操作</div>
+        </div>
+        <div class="card dbg">
+          <div class="title">发群聊</div>
+          <label>群号</label><input id="dGrpId" placeholder="682076009" />
+          <label>内容</label><textarea id="dGrpText" placeholder="群消息…"></textarea>
+          <div class="btns"><button class="act pri" onclick="dbgGroup()">发送</button></div>
+          <div class="res" id="dGrpRes">等待操作</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>QQ 空间</h2>
+      <div class="dbg-grid">
+        <div class="card dbg">
+          <div class="title">点赞 / 评论</div>
+          <label>说说 tid</label><input id="dTid" placeholder="从空间链接里取 tid" />
+          <label>评论内容（留空 = 只点赞）</label><textarea id="dCmt" placeholder="玉子来打卡…"></textarea>
+          <div class="btns">
+            <button class="act" onclick="dbgQzone(true)">只点赞</button>
+            <button class="act pri" onclick="dbgQzone(false)">点赞+评论</button>
+          </div>
+          <div class="res" id="dQzRes">最近监听的说说：<span id="dQzSeen">…</span></div>
+        </div>
+        <div class="card dbg">
+          <div class="title">好友审批</div>
+          <label>QQ 号</label><input id="dFrUid" placeholder="申请人 QQ" />
+          <div class="btns">
+            <button class="act pri" onclick="dbgFriend(true)">同意</button>
+            <button class="act dan" onclick="dbgFriend(false)">拒绝</button>
+          </div>
+          <div class="res" id="dFrRes">等待操作</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>系统</h2>
+      <div class="dbg-grid">
+        <div class="card dbg">
+          <div class="title">强制日程汇总</div>
+          <div class="desc">让玉子立刻整理一遍今天的群消息与日程，结果发到你 QQ。</div>
+          <div class="btns"><button class="act pri" onclick="dbgSummary()">立刻汇总</button></div>
+          <div class="res" id="dSumRes">等待操作</div>
+        </div>
+        <div class="card dbg">
+          <div class="title">原始 API 调用</div>
+          <label>action</label><input id="dAct" placeholder="get_login_info" />
+          <label>params（JSON）</label><textarea id="dParams" placeholder='{"user_id":123456789}'></textarea>
+          <div class="btns"><button class="act" onclick="dbgRaw()">调用</button></div>
+          <div class="res" id="dRawRes">等待操作</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 日程 · 天气 ========== -->
+  <section id="page-plan" class="hide">
+    <div class="grid">
+      <div class="card" id="wxCard">
+        <div class="row"><div class="title">🌤 天气</div><span class="spacer"></span><span class="chip" id="wxCity">武汉</span></div>
+        <div style="margin-top:10px" id="wxNow" class="hint">读取中…</div>
+        <div id="wxDays" class="hint" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <div class="row"><div class="title">⏰ 提醒设置</div></div>
+        <div class="hint" style="margin-top:8px">
+          天气推送：<b id="wxSwitch">—</b>（每天 <span id="wxAt">—</span>）<br />
+          日程汇总：每天 <b id="sumAt">—</b><br />
+          改这些值去「设置 → .env」改 <code>WEATHER_ON / WEATHER_AT / SUMMARY_AT</code>，改完重启玉子 bot。
+        </div>
+        <div class="btns"><button class="act pri" onclick="dbgSummary()">立刻汇总一次</button></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>日程（<span id="schDay">—</span>）</h2>
+      <div class="card">
+        <div class="filters">
+          <select id="schCat"><option>作业</option><option>考试</option><option>通知</option><option>其他</option></select>
+          <input id="schItem" placeholder="要做什么…" style="flex:1;min-width:220px" />
+          <input id="schDue" placeholder="截止（可空）" style="max-width:150px" />
+          <button class="act" style="max-width:80px" onclick="schAdd()">添加</button>
+          <button class="act" style="max-width:110px" onclick="schClear()">清空全部</button>
+        </div>
+        <div class="tblwrap" style="margin-top:10px;max-height:420px">
+          <table>
+            <thead><tr><th style="width:80px">类别</th><th>内容</th><th style="width:130px">截止</th><th style="width:80px">来源</th><th style="width:60px"></th></tr></thead>
+            <tbody id="schBody"><tr><td colspan="5" class="empty">读取中…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 插件 · 升级 ========== -->
+  <section id="page-plugin" class="hide">
+    <div class="grid">
+      <div class="card">
+        <div class="row"><div class="title">📦 当前版本</div><span class="spacer"></span><span class="chip" id="plVer">—</span></div>
+        <div class="hint" style="margin-top:8px">控制台本体在后端 <code>console.mjs</code> 里；插件是 <code>qq-bridge/plugins/&lt;名字&gt;/manifest.json</code>。</div>
+        <div class="btns"><button class="act pri" onclick="loadPlugins()">刷新插件列表</button><button class="act" onclick="checkUpdate()">检查更新</button></div>
+        <div class="hint" id="updBox" style="margin-top:8px">—</div>
+      </div>
+      <div class="card">
+        <div class="row"><div class="title">💬 QQ 里的入口</div></div>
+        <div class="hint" style="margin-top:8px" id="plCmds">—</div>
+        <div class="hint" style="margin-top:6px">手机 QQ 里只能「查询/引导」，装东西要在电脑控制台做。</div>
+      </div>
+    </div>
+    <div class="sec">
+      <h2>安装与修复</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="row"><div class="title">🧰 环境自检</div><span class="spacer"></span><span class="chip" id="setupChip">—</span></div>
+          <div class="hint" id="setupList" style="margin-top:8px">读取中…</div>
+          <div class="btns">
+            <button class="act pri" onclick="loadSetup()">重新检查</button>
+            <button class="act" onclick="setupAct('ffmpeg')">补装 ffmpeg</button>
+            <button class="act" onclick="setupAct('shortcut')">建快捷方式</button>
+            <button class="act" onclick="setupAct('autostart')">注册开机自启</button>
+          </div>
+          <div class="hint mono" id="setupMsg" style="margin-top:8px">—</div>
+        </div>
+        <div class="card">
+          <div class="row"><div class="title">💿 安装包</div><span class="spacer"></span><span class="chip" id="pkgVer">—</span></div>
+          <div class="hint" style="margin-top:8px">
+            给别人装、或换电脑重装时用这个：双击 <code>安装玉子控制台.exe</code>，它会把程序放到
+            <code>D:\DeepSeek test</code>、写启动脚本、注册自启，已存在的 <code>.env</code> 和 <code>data\</code> 不会覆盖。
+          </div>
+          <div class="btns">
+            <button class="act pri" onclick="setupAct('build')">重新打包</button>
+            <button class="act" onclick="setupAct('launch')">启动安装向导</button>
+            <button class="act" onclick="setupAct('installer')">打开安装包目录</button>
+          </div>
+          <div class="hint mono" id="pkgMsg" style="margin-top:8px">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <h2>已安装插件</h2>
+      <div class="card">
+        <div id="plList" class="hint">读取中…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 设置 ========== -->
+  <section id="page-persona" class="hide">
+    <div class="grid">
+      <div class="card">
+        <div class="row"><div class="title">🧠 记忆包</div><span class="spacer"></span><span class="chip" id="memChip">—</span></div>
+        <div class="hint" id="memStat" style="margin-top:8px">读取中…</div>
+        <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px">
+          <select id="memScope" class="inp" style="max-width:190px">
+            <option value="all">全部（含电脑端）</option>
+            <option value="chat">只 QQ 侧（私聊+群）</option>
+            <option value="owner">只主人私聊</option>
+          </select>
+          <select id="memFmt" class="inp" style="max-width:230px;flex:1 1 160px" title="导出格式">
+            <option value="yzm">记忆包 .yzm（最小，可回导）</option>
+            <option value="docx">Word 文档 .docx（给人看）</option>
+            <option value="doc">Word 文档 .doc（兼容老 Word）</option>
+          </select>
+          <button class="act pri" onclick="memExport()">导出</button>
+            <button class="act" onclick="memExport(true)">另存为…</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <select id="memMode" class="inp" style="max-width:150px">
+            <option value="merge">合并（去重）</option>
+            <option value="replace">覆盖（先备份）</option>
+          </select>
+          <button class="act" onclick="document.getElementById('memFile').click()">导入记忆</button>
+          <input type="file" id="memFile" accept=".yzm,.json,.gz,.docx,.doc,.rtf,.md,.txt" style="display:none" onchange="memImport(this)">
+        </div>
+        <div class="hint mono" id="memMsg" style="margin-top:8px">记忆包是 gzip 压缩的 JSON：换台电脑、换个新号，直接导入即可续上记忆。</div>
+        <div class="row" style="margin-top:6px;gap:8px">
+          <button class="act" onclick="openExport()">打开导出目录</button>
+          <span class="hint mono" id="exportDir">—</span>
+        </div>
+        <details style="margin-top:8px">
+          <summary class="hint" style="cursor:pointer;color:var(--ac)">导什么格式？点开看支持列表</summary>
+          <div class="hint" style="margin-top:6px;line-height:1.7">
+            <b>导出</b>：<br>
+            · <b>.yzm</b> 记忆包 — 体积最小（约 20KB／400 条），能被玉子「读回」，也能量身给新用户<br>
+            · <b>.docx</b> 真 Word — 给人看、能打印、能编辑；但要还原记忆请用 .yzm<br>
+            · <b>.doc</b> — 同上，老版 Word/WPS 也能开（本质是 RTF）<br>
+            <b>导入</b>：<b>.yzm</b>（记忆包，会识别并去重）、<b>.docx</b>、<b>.doc</b>、<b>.rtf</b>、<b>.md</b>、<b>.txt</b><br>
+            文档导入会把每段当作一条记忆（渠道标记为 doc），所以导 Word 也能「喂」一点背景给玉子。
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <div class="row"><div class="title">🎭 性格包</div><span class="spacer"></span><span class="chip" id="perChip">—</span></div>
+        <div class="hint" id="perHint" style="margin-top:8px">上传人设文件（.yzp / .docx / .doc / .md / .txt），系统会自动分析并写入风格。</div>
+        <div class="row" style="margin-top:8px">
+          <select id="perFmt" class="inp" style="max-width:240px" title="导出格式">
+            <option value="yzp">性格包 .yzp（可回导）</option>
+            <option value="docx">Word 文档 .docx</option>
+            <option value="doc">Word 文档 .doc</option>
+            <option value="md">Markdown .md</option>
+          </select>
+        </div>
+        <div class="btns">
+          <button class="act pri" onclick="perExport()">导出</button>
+            <button class="act" onclick="perExport(true)">另存为…</button>
+          <button class="act" onclick="document.getElementById('perFile').click()">上传人设文件</button>
+          <input type="file" id="perFile" accept=".yzp,.docx,.doc,.rtf,.md,.txt,.json,.gz" style="display:none" onchange="perImport(this)">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <label class="hint" style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="perAI" checked> 用 AI 读一遍再定风格（更准，花一次 token）
+          </label>
+        </div>
+        <div class="hint mono" id="perMsg" style="margin-top:8px">—</div>
+        <div class="hint" style="margin-top:6px">导出时会先弹 Windows「另存为」，目录自己挑；系统不给写的地方会自动存到导出目录。</div>
+        <details style="margin-top:8px">
+          <summary class="hint" style="cursor:pointer;color:var(--ac)">支持哪些格式？点开看</summary>
+          <div class="hint" style="margin-top:6px;line-height:1.7">
+            <b>导出</b>：<br>
+            · <b>.yzp</b> 性格包 — 能原样回导（人设 + 风格档案一起带走）<br>
+            · <b>.docx / .doc</b> — 给人看的正式文档（换人接手、存档）<br>
+            · <b>.md</b> — 纯文本，方便丢进其它 AI<br>
+            <b>导入</b>：<b>.yzp</b>、<b>.docx</b>、<b>.doc</b>、<b>.rtf</b>、<b>.md</b>、<b>.txt</b><br>
+            普通文档导入 = 把正文当成人设正文；带「名字／语气／口癖」等字段的会被自动识别进风格档案。
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>风格档案（会拼进每一句回复的提示词）</h2>
+      <div class="card">
+        <div class="grid" style="grid-template-columns:1fr 1fr">
+          <div>
+            <div class="hint">名字</div><input id="stName" class="inp" style="width:100%">
+            <div class="hint" style="margin-top:8px">怎么称呼用户</div><input id="stCall" class="inp" style="width:100%">
+            <div class="hint" style="margin-top:8px">语气</div><input id="stTone" class="inp" style="width:100%">
+            <div class="hint" style="margin-top:8px">回复长度</div><input id="stLen" class="inp" style="width:100%">
+          </div>
+          <div>
+            <div class="hint">口癖（逗号分隔）</div><input id="stQuirk" class="inp" style="width:100%">
+            <div class="hint" style="margin-top:8px">绝对不说（逗号分隔）</div><input id="stForbid" class="inp" style="width:100%">
+            <div class="hint" style="margin-top:8px">其它硬要求</div><input id="stExtra" class="inp" style="width:100%">
+            <label class="hint" style="display:flex;align-items:center;gap:6px;margin-top:8px">
+              <input type="checkbox" id="stEmoji"> 允许用表情符号
+            </label>
+          </div>
+        </div>
+        <div class="btns" style="margin-top:10px">
+          <button class="act pri" onclick="styleSave()">保存风格</button>
+          <button class="act" onclick="styleReset()">恢复默认</button>
+        </div>
+        <div class="hint mono" id="stMsg" style="margin-top:8px">—</div>
+        <pre class="hint mono" id="stBlock" style="margin-top:8px;white-space:pre-wrap"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="page-setting" class="hide">
+    <div class="grid">
+      <div class="card">
+        <div class="row"><div class="title">💰 DeepSeek 余额</div><span class="spacer"></span><span class="chip" id="balPeak">—</span></div>
+        <div style="font-size:26px;font-weight:700;margin-top:8px" id="balTotal">—</div>
+        <div class="hint" id="balDetail" style="margin-top:6px">—</div>
+        <div class="hint" id="balNext" style="margin-top:4px">—</div>
+      </div>
+      <div class="card">
+        <div class="row"><div class="title">🧾 峰谷规则</div></div>
+        <div class="hint" style="margin-top:8px" id="priceRules">—</div>
+        <div class="hint" style="margin-top:6px">规则文件：<code>data/pricing.json</code>，官方改价只改这里。</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="row"><div class="title">📊 今日用量</div><span class="spacer"></span><button class="act" style="max-width:90px" onclick="loadUsage()">刷新</button></div>
+        <div style="font-size:24px;font-weight:700;margin-top:8px" id="useCalls">—</div>
+        <div class="hint" id="useTok" style="margin-top:6px">—</div>
+        <div class="hint" id="useAvg" style="margin-top:4px">—</div>
+        <div class="hint" id="useDays" style="margin-top:10px">—</div>
+      </div>
+      <div class="card">
+        <div class="row"><div class="title">🩺 自检（安装 / 运行检查）</div><span class="spacer"></span><button class="act" style="max-width:90px" onclick="loadDoctor()">运行检查</button><button class="act" style="max-width:100px" onclick="fixAll()">一键修复</button></div>
+        <div id="doctorBody" class="hint" style="margin-top:8px">点「运行检查」看看缺什么。</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>配置（.env）</h2>
+      <div class="card">
+        <div class="hint">密钥默认打码。改完点保存会先自动备份一次，然后重启对应服务生效。</div>
+        <div class="tblwrap" style="margin-top:10px;max-height:340px">
+          <table>
+            <thead><tr><th style="width:230px">键</th><th>值</th><th style="width:70px"></th></tr></thead>
+            <tbody id="envBody"><tr><td colspan="3" class="empty">读取中…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>白名单（这些人发消息玉子会回）</h2>
+      <div class="card">
+        <div class="filters">
+          <input id="frUid" placeholder="QQ 号" style="max-width:180px" />
+          <input id="frName" placeholder="备注名" style="max-width:180px" />
+          <button class="act" style="max-width:80px" onclick="frAdd()">加入</button>
+        </div>
+        <div id="frList" class="hint" style="margin-top:10px">—</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>防火墙 / 网络</h2>
+      <div class="card">
+        <div class="hint">控制台只监听 <code>127.0.0.1:3210</code>，外网访问不到，正常不会触发防火墙弹窗。<br />
+          如果 Windows 还是弹「是否允许网络访问」，点这里加一条放行规则（需要管理员权限）。</div>
+        <div class="filters" style="margin-top:10px">
+          <button class="act pri" style="max-width:150px" onclick="addFw()">加白名单</button>
+          <span class="hint" id="fwStat">—</span>
+        </div>
+        <div class="hint mono" id="fwCmd" style="margin-top:8px;display:none;font-size:11px;word-break:break-all"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>备份 / 回滚</h2>
+      <div class="card">
+        <div class="filters">
+          <button class="act pri" style="max-width:120px" onclick="doBackup()">立即备份</button>
+          <span class="hint" id="bkDir">—</span>
+        </div>
+        <div class="tblwrap" style="margin-top:10px;max-height:300px">
+          <table>
+            <thead><tr><th>文件</th><th style="width:100px">大小</th><th style="width:150px">时间</th><th style="width:80px"></th></tr></thead>
+            <tbody id="bkBody"><tr><td colspan="4" class="empty">读取中…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>玉子控制台 v0.3 · 本地运行，数据不出机器</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SVC_META = {
+  napcat: { icon:'🐱', desc:'QQ 协议端 · 端口 3001', btn:true },
+  bot:    { icon:'💬', desc:'聊天主进程 · 单例锁 3008', btn:true },
+  watch:  { icon:'👍', desc:'说说自动点赞 + 评论', btn:true },
+  edge:   { icon:'🌐', desc:'CDP 调试端口 9333', btn:true },
+  dsh:    { icon:'🖥️', desc:'DeepSeek Harness 桌面程序', btn:true },
+  qq:     { icon:'👤', desc:'本机 QQ 进程数', btn:false }
+};
+let status = null, busy = new Set(), curLog = 'boot', procs = null;
+let chatOffset = 0, chatTotal = 0, chatLimit = 60;
+
+// 进程详情：谁在跑、PID、几点起的（8 秒刷一次，别让状态轮询把它拖慢）
+async function loadProcs(){
+  try{ const j=await (await fetch('/api/procs',{cache:'no-store'})).json(); procs=j.groups||null; render(); }catch(e){}
+}
+function procLine(id){
+  const g = procs && procs[id];
+  if(!g || !g.length) return '';
+  const shown = g.slice(0,3).map(p=>'PID '+(p.pid||'?')+(p.start?' · '+p.start:'')).join('<br />');
+  const more = g.length>3 ? `<br />…还有 ${g.length-3} 个` : '';
+  return `<div class="kv"><span>进程 ${g.length}</span><b class="mono" style="text-align:right;font-size:11px;line-height:1.5">${shown}${more}</b></div>`;
+}
+
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),3200); }
+function fmtT(t){ if(!t) return '—'; const ms = t < 1e12 ? t*1000 : t; const d=new Date(ms);
+  const p=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; }
+
+function render(){
+  if(!status) return;
+  const grid=document.getElementById('svcGrid'); grid.innerHTML='';
+  for(const [id,meta] of Object.entries(SVC_META)){
+    const s = status.services[id] || { name:id, up:false };
+    const up = !!s.up;
+    let extra='';
+    if(id==='napcat') extra = `<div class="kv"><span>QQ 进程</span><b>${s.qqProcs??0}</b></div>`;
+    if(id==='qq') extra = `<div class="kv"><span>数量</span><b>${s.count??0}</b></div>`;
+    // NapCat 起不来的最常见情况不是「没启动」，而是「后端在跑、等扫码」
+    const waiting = id==='napcat' && !up && s.bootAlive;
+    if(waiting) extra += `<div class="kv wait"><span>⚠️ 需要扫码登录</span><a href="#qrSec" onclick="document.getElementById('qrSec').scrollIntoView({behavior:'smooth'});return false;">看二维码</a></div>`;
+    const desc = (id==='napcat' && !up && s.detail) ? s.detail : meta.desc;
+    const btns = meta.btn ? `<div class="btns">
+        <button class="act pri" ${busy.has(id+'start')?'disabled':''} onclick="svcAct('${id}','start')">启动</button>
+        <button class="act" ${busy.has(id+'stop')?'disabled':''} onclick="svcAct('${id}','stop')">停止</button>
+        <button class="act" ${busy.has(id+'restart')?'disabled':''} onclick="svcAct('${id}','restart')">重启</button>
+      </div>` : '';
+    const el=document.createElement('div'); el.className='card';
+    el.innerHTML=`<div class="row"><span class="dot ${up?'ok':'bad'}"></span>
+        <div style="flex:1"><div class="title">${meta.icon} ${s.name||id}</div><div class="desc">${desc}</div></div>
+        <span class="chip" style="color:${up?'var(--ok)':'var(--bad)'}">${up?(waiting?'等待扫码':'运行中'):'已停止'}</span></div>${extra}${procLine(id)}${btns}`;
+    grid.appendChild(el);
+  }
+  const sys=status.sys||{};
+  document.getElementById('sysinfo').textContent =
+    `内存 ${sys.freeMemMB}/${sys.totalMemMB} MB · 控制台 ${sys.consoleMemMB} MB · 主人 ${sys.owner||'未设置'}`;
+  { const qu = document.getElementById('qrUin'); if (qu && sys.self) qu.textContent = sys.self; }
+  const qr=document.getElementById('qrSec'), img=document.getElementById('qrImg');  if(!status.services.napcat.up){
+    qr.style.display='';
+    const at = status.services.napcat.qrAt||0;
+    if(img.dataset.stamped !== String(at)){ img.dataset.stamped=String(at); loadQr(); }
+  } else { qr.style.display='none'; img.dataset.stamped=''; }
+}
+
+async function loadQr(){
+  const img=document.getElementById('qrImg'), msg=document.getElementById('qrMsg');
+  try{
+    const r=await fetch('/api/qrcode?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok){
+      const j=await r.json().catch(()=>({}));
+      msg.textContent='⚠️ '+(j.error||('二维码读取失败 '+r.status));
+      img.removeAttribute('src');
+      // 没有可用二维码就自动要一张新的（每 30 秒最多一次，别把临时码刷废）
+      const now=Date.now();
+      if(!loadQr._last || now-loadQr._last>30000){ loadQr._last=now; freshQr(); }
+      return;
+    }
+    const bl=await r.blob();
+    if(img.dataset.url) URL.revokeObjectURL(img.dataset.url);
+    const u=URL.createObjectURL(bl); img.dataset.url=u; img.src=u;
+    const mt=r.headers.get('X-Mtime');
+    msg.textContent='二维码生成于 '+new Date(mt).toLocaleTimeString('zh-CN');
+  }catch(e){ msg.textContent='读取失败：'+e.message; }
+}
+async function refresh(){ try{ const r=await fetch('/api/status',{cache:'no-store'}); status=await r.json(); failN=0; render(); }
+  catch(e){
+    document.getElementById('sysinfo').textContent='后端未响应';
+    // 后端重启过（我改代码时经常发生）→ 页面自己重载一次，省得留一个灰白空窗口
+    if(++failN>=3){ failN=0; location.reload(); }
+  } }
+let failN=0;
+
+async function svcAct(id,act){ busy.add(id+act); render();
+  try{ const r=await fetch(`/api/svc/${id}/${act}`,{method:'POST'}); const j=await r.json(); toast(j.msg||j.error||'完成'); }
+  catch(e){ toast('操作失败：'+e.message); }
+  busy.delete(id+act); setTimeout(refresh,1200);
+  // NapCat 启动/重启后如果掉登录了，直接把二维码滚到眼前，别让人猜
+  if(id==='napcat' && (act==='start'||act==='restart')){
+    setTimeout(()=>{ refresh().then(()=>{
+      if(status && !status.services.napcat.up){
+        document.getElementById('qrSec').scrollIntoView({behavior:'smooth',block:'center'});
+        toast('需要扫码登录：用手机 QQ 扫下面的二维码');
+        freshQr();
+      }
+    }); }, 3000);
+  }
+}
+
+async function allAct(act){
+  if(act==='stop' && !confirm('确认停掉 NapCat、玉子、空间监听、无头 Edge？')) return;
+  for(const id of ['watch','bot','edge','napcat']){ try{ await fetch(`/api/svc/${id}/${act}`,{method:'POST'}); }catch(e){} }
+  toast('已下发全部'+(act==='stop'?'停止':'启动')); setTimeout(refresh,2500);
+}
+
+async function loadLog(name){
+  curLog=name; document.querySelectorAll('#logTabs button').forEach(b=>b.classList.toggle('on',b.dataset.log===name));
+  const box=document.getElementById('logBox');
+  try{ const r=await fetch(`/api/logs?name=${name}&lines=160`,{cache:'no-store'}); const j=await r.json();
+    box.textContent=j.text||'（空）'; box.scrollTop=box.scrollHeight; }
+  catch(e){ box.textContent='读取失败：'+e.message; }
+}
+document.querySelectorAll('#logTabs button').forEach(b=> b.onclick=()=>loadLog(b.dataset.log));
+
+// ---------- 聊天记录 ----------
+function dateToTs(v, end){ if(!v) return ''; const d=new Date(v+'T'+(end?'23:59:59':'00:00:00')); return Math.floor(d.getTime()/1000); }
+
+async function loadChat(offset){
+  chatOffset = Math.max(0, offset);
+  const ch=document.getElementById('fCh').value;
+  const q=document.getElementById('fQ').value.trim();
+  const from=dateToTs(document.getElementById('fFrom').value,false);
+  const to=dateToTs(document.getElementById('fTo').value,true);
+  const body=document.getElementById('chatBody');
+  body.innerHTML='<tr><td colspan="4" class="empty">查询中…</td></tr>';
+  try{
+    const usp=new URLSearchParams({limit:chatLimit,offset:chatOffset});
+    if(ch) usp.set('ch',ch); if(q) usp.set('q',q); if(from) usp.set('from',from); if(to) usp.set('to',to);
+    const r=await fetch('/api/history?'+usp.toString(),{cache:'no-store'}); const j=await r.json();
+    chatTotal=j.total||0;
+    const sel=document.getElementById('fCh');
+    if(sel.options.length<=2){
+      for(const c of (j.channels||[])){ const o=document.createElement('option'); o.value=c.ch; o.textContent=`${c.name}（${c.count}）`; sel.appendChild(o); }
+    }
+    document.getElementById('chatStat').textContent=`共 ${chatTotal} 条 · ${chatOffset===0?'最新 ':''}${chatOffset+1}-${Math.min(chatOffset+chatLimit,chatTotal)}`;
+    if(!j.items||!j.items.length){ body.innerHTML='<tr><td colspan="4" class="empty">没有匹配的记录</td></tr>'; return; }
+    body.innerHTML = j.items.map(it=>{
+      const mine = it.role==='assistant';
+      const badge = mine ? '<span class="badge g">玉子</span>' : '<span class="badge">对方</span>';
+      const txt = String(it.text).replace(/</g,'&lt;').replace(/\n/g,'<br>');
+      return `<tr class="${mine?'mine':''}"><td class="t-time">${fmtT(it.t)}</td><td class="t-who">${it.who}</td><td class="t-role">${badge}</td><td>${txt}</td></tr>`;
+    }).join('');
+  }catch(e){ body.innerHTML=`<tr><td colspan="4" class="empty">失败：${e.message}</td></tr>`; }
+}
+
+function chatPage(dir){ const n=chatOffset+dir*chatLimit; if(n<0) return; if(!dir) return; loadChat(n); }
+
+function exportChat(){
+  const ch=document.getElementById('fCh').value, q=document.getElementById('fQ').value.trim();
+  const from=dateToTs(document.getElementById('fFrom').value,false), to=dateToTs(document.getElementById('fTo').value,true);
+  const usp=new URLSearchParams();
+  if(ch) usp.set('ch',ch); if(q) usp.set('q',q); if(from) usp.set('from',from); if(to) usp.set('to',to);
+  location.href='/api/history/export?'+usp.toString();
+  toast('开始下载导出文件');
+}
+
+document.getElementById('fQ').addEventListener('keydown',e=>{ if(e.key==='Enter') loadChat(0); });
+
+// ---------- 调试台 ----------
+// ---------- 群聊白名单 ----------
+async function loadGroups(){
+  try{
+    const r=await fetch('/api/groups',{cache:'no-store'}); const j=await r.json();
+    if(!j.ok){ document.getElementById('grpList').textContent='读取失败：'+(j.error||''); return; }
+    const modeEl=document.getElementById('grpMode');
+    if(modeEl) modeEl.value = j.mode || 'mention';
+    const cdEl=document.getElementById('grpCd');
+    if(cdEl && !cdEl.value) cdEl.value = j.cooldown || 45;
+    const dot=document.getElementById('grpDot');
+    if(dot) dot.className='dot '+((j.whitelist||[]).length?'ok':'');
+    const rows=(j.whitelist||[]).map(g=>`<div class="row" style="justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #ffffff10">
+      <div><b>${esc(g.name || '（群名未知）')}</b> <span class="chip">${g.gid}</span>
+      <span class="hint">${g.messages?('收到 '+g.messages+' 条，最近：'+esc(g.lastText||'')):'还没收到过消息'}</span></div>
+      <button class="act" style="width:auto;flex:0 0 auto;padding:5px 14px" onclick="grpDel('${g.gid}')">移出</button></div>`).join('');
+    const cand=(j.candidates||[]).length
+      ? `<div class="hint" style="margin-top:10px">群里见过的其他群（点一下就加）：${(j.candidates||[]).map(c=>`<button class="act" style="width:auto;flex:0 0 auto;margin:4px 4px 0 0;padding:5px 12px" onclick="grpQuick('${c.gid}')">${esc(c.name)} ${c.gid}</button>`).join('')}</div>`
+      : '';
+    document.getElementById('grpList').innerHTML = (rows || '<div class="hint">还没有群。把群号填到上面点「加入白名单」。</div>') + cand;
+  }catch(e){ document.getElementById('grpList').textContent='读取失败：'+e.message; }
+}
+function esc(s){ return String(s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+async function grpPost(body){
+  const r=await fetch('/api/groups',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  return r.json();
+}
+async function grpAdd(){
+  const gid=(document.getElementById('grpId').value||'').replace(/\D/g,'');
+  if(!gid) return toast('先填群号');
+  setRes('grpMsg','正在加入…');
+  const j=await grpPost({op:'add',gid});
+  if(j.ok){ setRes('grpMsg','✅ 已加入 '+gid+'，这个群现在会自动回话（最多 10 秒生效）'); document.getElementById('grpId').value=''; loadGroups(); }
+  else setRes('grpMsg','❌ '+(j.error||'失败'));
+}
+async function grpQuick(gid){ document.getElementById('grpId').value=gid; grpAdd(); }
+async function grpDel(gid){
+  const j=await grpPost({op:'del',gid});
+  setRes('grpMsg', j.ok?('已移出 '+gid):('❌ '+(j.error||'失败')));
+  loadGroups();
+}
+async function grpMode(){
+  const mode=document.getElementById('grpMode').value;
+  const cooldown=Number(document.getElementById('grpCd').value)||45;
+  const j=await grpPost({op:'mode',mode,cooldown});
+  setRes('grpMsg', j.ok?('已保存：'+(mode==='all'?'每句都回':mode==='mention'?'只回 @':'不回')+'，冷却 '+cooldown+' 秒'):('❌ '+(j.error||'失败')));
+  loadGroups();
+}
+
+async function loadDebug(){
+  try{
+    const r=await fetch('/api/debug/info',{cache:'no-store'}); const j=await r.json();
+    document.getElementById('dbgDot').className='dot '+(j.login?'ok':'bad');
+    document.getElementById('dbgLogin').textContent = j.login ? `${j.login.nickname}（${j.login.user_id}）` : ('未连接：'+(j.loginErr||''));
+    document.getElementById('dbgFriends').innerHTML = (j.friends||[]).map(f=>`${f.remark||f.nick} <span class="chip">${f.uid}</span>`).join('<br>')||'—';
+    document.getElementById('dbgGroups').innerHTML = (j.groups||[]).map(g=>`${g.name} <span class="chip">${g.gid} · ${g.n}人</span>`).join('<br>')||'—';
+    document.getElementById('dbgWhite').innerHTML = (j.whitelist||[]).map(w=>`${w.name} <span class="chip">${w.uid}</span>`).join('<br>')||'—';
+    if(!document.getElementById('dMsgUid').value) document.getElementById('dMsgUid').value = (status&&status.sys&&status.sys.owner)||'';
+    if((j.groups||[]).length && !document.getElementById('dGrpId').value) document.getElementById('dGrpId').value = j.groups[0].gid;
+  }catch(e){ document.getElementById('dbgLogin').textContent='读取失败：'+e.message; }
+  try{ const s=await fetch('/api/qzone/state',{cache:'no-store'}); const sj=await s.json();
+    document.getElementById('dQzSeen').textContent=(sj.seen||[]).join(' , ')||'（暂无）'; }catch(e){}
+}
+
+function setRes(id,txt){ document.getElementById(id).textContent=txt; }
+
+async function dbgSend(){
+  const uid=document.getElementById('dMsgUid').value.trim(), text=document.getElementById('dMsgText').value;
+  if(!text.trim()) return toast('内容不能为空');
+  setRes('dMsgRes','发送中…');
+  try{ const r=await fetch('/api/debug/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,text})});
+    const j=await r.json(); setRes('dMsgRes', j.ok?'✅ 已发送':'❌ '+(j.error||JSON.stringify(j.ret))); }
+  catch(e){ setRes('dMsgRes','❌ '+e.message); }
+}
+
+async function dbgGroup(){
+  const gid=document.getElementById('dGrpId').value.trim(), text=document.getElementById('dGrpText').value;
+  if(!gid||!text.trim()) return toast('群号和内容都要填');
+  setRes('dGrpRes','发送中…');
+  try{ const r=await fetch('/api/debug/group',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({gid,text})});
+    const j=await r.json(); setRes('dGrpRes', j.ok?'✅ 已发到群':'❌ '+(j.error||JSON.stringify(j.ret))); }
+  catch(e){ setRes('dGrpRes','❌ '+e.message); }
+}
+
+async function dbgQzone(likeOnly){
+  const tid=document.getElementById('dTid').value.trim(), text=document.getElementById('dCmt').value;
+  if(!tid) return toast('先填 tid');
+  setRes('dQzRes','执行中（要走无头浏览器，约 10-20 秒）…');
+  try{ const r=await fetch('/api/debug/qzone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tid,text,likeOnly})});
+    const j=await r.json(); setRes('dQzRes', j.text||'(无输出)'); }
+  catch(e){ setRes('dQzRes','❌ '+e.message); }
+}
+
+async function dbgFriend(approve){
+  const uid=document.getElementById('dFrUid').value.trim();
+  if(!uid) return toast('先填 QQ 号');
+  setRes('dFrRes','处理中…');
+  try{ const r=await fetch('/api/debug/friend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,approve})});
+    const j=await r.json(); setRes('dFrRes', j.ok?('✅ 已'+(approve?'同意':'拒绝')):'❌ '+(j.error||JSON.stringify(j.ret))); }
+  catch(e){ setRes('dFrRes','❌ '+e.message); }
+}
+
+async function dbgSummary(){
+  setRes('dSumRes','已下发…');
+  try{ const r=await fetch('/api/debug/summary',{method:'POST'}); const j=await r.json(); setRes('dSumRes', j.ok?'✅ '+j.msg:'❌ '+j.error); }
+  catch(e){ setRes('dSumRes','❌ '+e.message); }
+}
+
+async function dbgRaw(){
+  const action=document.getElementById('dAct').value.trim();
+  let params={};
+  try{ params=JSON.parse(document.getElementById('dParams').value||'{}'); }catch(e){ return toast('params 不是合法 JSON'); }
+  if(!action) return toast('先填 action');
+  setRes('dRawRes','调用中…');
+  try{ const r=await fetch('/api/debug/raw',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,params})});
+    const j=await r.json(); setRes('dRawRes', JSON.stringify(j,null,2)); }
+  catch(e){ setRes('dRawRes','❌ '+e.message); }
+}
+
+// ---------- 日程 · 天气 ----------
+async function loadPlan(){
+  try{
+    const w=await (await fetch('/api/weather',{cache:'no-store'})).json();
+    if(!w.ok){ document.getElementById('wxNow').textContent='天气读取失败：'+(w.error||'未知'); }
+    else{
+      document.getElementById('wxCity').textContent=w.city;
+      document.getElementById('wxNow').innerHTML =
+        `<span style="font-size:30px;font-weight:700">${w.now.temp}℃</span> <span style="font-size:15px">${w.now.text}</span>`+
+        `<br>湿度 ${w.now.humidity}% · 风速 ${w.now.wind} km/h · 今日 ${w.today.min}~${w.today.max}℃ · 降水概率 ${w.today.precip}%`;
+      document.getElementById('wxDays').innerHTML = (w.days||[]).map(d=>
+        `<div class="kv"><span>${d.day.slice(5)} ${d.text}</span><b>${d.min}~${d.max}℃ / ${d.precip??'-'}%</b></div>`).join('');
+    }
+  }catch(e){ document.getElementById('wxNow').textContent='天气读取失败：'+e.message; }
+  try{
+    const s=await (await fetch('/api/schedule',{cache:'no-store'})).json();
+    document.getElementById('schDay').textContent = s.day||'—';
+    const body=document.getElementById('schBody');
+    if(!(s.items||[]).length){ body.innerHTML='<tr><td colspan="5" class="empty">今天还没有日程</td></tr>'; }
+    else body.innerHTML = s.items.map((it,i)=>`<tr><td>${it.cat||'其他'}</td><td>${String(it.item).replace(/</g,'&lt;')}</td>
+        <td>${it.due||'—'}</td><td>${it.src||'—'}</td>
+        <td><button class="act dan" style="padding:2px 8px" onclick="schDel(${i})">删</button></td></tr>`).join('');
+  }catch(e){ document.getElementById('schBody').innerHTML=`<tr><td colspan="5" class="empty">${e.message}</td></tr>`; }
+  try{
+    const st=await (await fetch('/api/settings',{cache:'no-store'})).json();
+    const g=k=>{ const v=(st.vars||[]).find(x=>x.key===k); return v?v.value:''; };
+    document.getElementById('wxSwitch').textContent = g('WEATHER_ON')==='0'?'关闭':'开启';
+    document.getElementById('wxAt').textContent = g('WEATHER_AT')||'07:30';
+    document.getElementById('sumAt').textContent = g('SUMMARY_AT')||'21:30';
+  }catch(e){}
+}
+
+async function schAdd(){
+  const item=document.getElementById('schItem').value.trim();
+  if(!item) return toast('先写内容');
+  const r=await fetch('/api/schedule',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({op:'add',cat:document.getElementById('schCat').value,item,due:document.getElementById('schDue').value.trim()})});
+  const j=await r.json(); if(j.ok){ document.getElementById('schItem').value=''; document.getElementById('schDue').value=''; toast('已添加'); loadPlan(); } else toast(j.error);
+}
+async function schDel(i){
+  const r=await fetch('/api/schedule',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'del',idx:i})});
+  const j=await r.json(); if(j.ok) loadPlan(); else toast(j.error);
+}
+async function schClear(){
+  if(!confirm('清空今天的全部日程？')) return;
+  await fetch('/api/schedule',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'clear'})});
+  toast('已清空'); loadPlan();
+}
+
+// ---------- 插件 ----------
+async function checkUpdate(){
+  const box=document.getElementById('updBox');
+  box.textContent='检查中…';
+  try{
+    const u=await (await fetch('/api/update',{cache:'no-store'})).json();
+    document.getElementById('plVer').textContent='v'+u.local;
+    if(u.hasUpdate){
+      const r=u.remote||{};
+      box.innerHTML=`有新版本 <b>v${r.version}</b>${r.note?`　${String(r.note).replace(/</g,'&lt;')}`:''}<br>包在 <code>qq-bridge/updates/</code>，点这里说明我还没做自动应用，先手动替换再备份。`;
+    }else{
+      box.innerHTML = u.remote ? `已是最新（v${u.local}）` : `本地版本 v${u.local}；${u.note||''}`;
+    }
+  }catch(e){ box.textContent='检查失败：'+e.message; }
+}
+
+async function loadSetup(){
+  try{
+    const j=await (await fetch('/api/setup',{cache:'no-store'})).json();
+    document.getElementById('setupChip').textContent=(j.okCount||0)+'/'+(j.total||0)+' 就绪';
+    document.getElementById('setupList').innerHTML=(j.items||[]).map(it=>
+      `<div class="kv"><span>${it.ok?'✅':'❌'} ${it.name}<br><span class="desc mono">${it.detail||''}</span></span></div>`).join('');
+  }catch(e){ document.getElementById('setupList').textContent='读取失败：'+e.message; }
+  try{
+    const u=await (await fetch('/api/update',{cache:'no-store'})).json();
+    document.getElementById('pkgVer').textContent='v'+(u.local||'?');
+  }catch(e){}
+}
+async function setupAct(op){
+  const box=document.getElementById((op==='build'||op==='launch'||op==='installer')?'pkgMsg':'setupMsg');
+  box.textContent='执行中…';
+  try{
+    const r=await fetch('/api/setup/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op})});
+    const j=await r.json();
+    box.textContent=(j.ok?'✓ ':'✗ ')+(j.msg||JSON.stringify(j));
+    if(op==='build'||op==='launch'||op==='installer') loadSetup();
+  }catch(e){ box.textContent='失败：'+e.message; }
+}
+
+async function loadPlugins(){
+  try{
+    const j=await (await fetch('/api/plugins',{cache:'no-store'})).json();
+    document.getElementById('plVer').textContent='v'+(j.version||'?');
+    document.getElementById('plCmds').innerHTML=(j.qqCmds||[]).map(c=>`<code>${c}</code>`).join(' ');
+    const list=j.plugins||[];
+    document.getElementById('plList').innerHTML = list.length
+      ? list.map(p=>`<div class="kv"><span><b>${p.name}</b> <span class="chip">${p.id}</span><br><span class="desc">${p.desc||''}</span></span><b>v${p.version}</b></div>`).join('')
+      : '还没有插件。往 <code>qq-bridge/plugins/&lt;名字&gt;/manifest.json</code> 放一个就会出现在这里。';
+  }catch(e){ document.getElementById('plList').textContent='读取失败：'+e.message; }
+}
+
+// ---------- 设置 ----------
+async function loadUsage(){
+  try{
+    const u=await (await fetch('/api/usage',{cache:'no-store'})).json();
+    const t=u.today||{};
+    document.getElementById('useCalls').textContent=`${t.calls||0} 次调用`;
+    document.getElementById('useTok').textContent=`输入 ${t.inTok||0} · 输出 ${t.outTok||0} token`;
+    document.getElementById('useAvg').textContent=`平均 ${t.avgMs||0} ms · 带工具 ${t.toolCalls||0} 次`;
+    const days=(u.days||[]).filter(d=>d.calls);
+    document.getElementById('useDays').innerHTML = days.length
+      ? days.map(d=>`${d.day}　${d.calls} 次　${d.inTok+d.outTok} tok　${d.avgMs} ms`).join('<br>')
+      : '还没有历史数据。';
+  }catch(e){ document.getElementById('useCalls').textContent='读取失败'; }
+}
+
+async function loadDoctor(){
+  const box=document.getElementById('doctorBody');
+  box.textContent='检查中…';
+  try{
+    const d=await (await fetch('/api/doctor',{cache:'no-store'})).json();
+    box.innerHTML = `<div style="margin-bottom:8px">${d.okCount}/${d.total} 项正常</div>` +
+      (d.items||[]).map(i=>`<div style="margin:5px 0">
+        <span style="color:${i.ok?'var(--ok)':'var(--bad)'}">${i.ok?'✔':'✖'}</span>
+        <b>${i.name}</b>
+        <span style="color:var(--muted)">${String(i.detail||'').replace(/</g,'&lt;')}</span>
+        ${i.ok?'':`<div class="hint" style="margin-left:18px">处理：${String(i.fix||'').replace(/</g,'&lt;')}</div>`}
+      </div>`).join('');
+  }catch(e){ box.textContent='检查失败：'+e.message; }
+}
+
+async function fixAll(){
+  const box=document.getElementById('doctorBody');
+  box.textContent='正在修，最多等 90 秒（拉 NapCat 慢）…';
+  try{
+    const r=await (await fetch('/api/doctor/fix',{method:'POST'})).json();
+    const acts=(r.actions||[]).map(a=>`· ${String(a).replace(/</g,'&lt;')}`).join('<br>') || '· 没发现需要修的';
+    box.innerHTML = `<div style="margin-bottom:8px;color:var(--ok)">修复动作</div>${acts}`;
+    const d=r.doctor||{};
+    box.innerHTML += `<div style="margin:12px 0 6px">复检：${d.okCount||0}/${d.total||0} 项正常</div>` +
+      (d.items||[]).map(i=>`<div style="margin:5px 0"><span style="color:${i.ok?'var(--ok)':'var(--bad)'}">${i.ok?'✔':'✖'}</span> <b>${i.name}</b> <span style="color:var(--muted)">${String(i.detail||'').replace(/</g,'&lt;')}</span></div>`).join('');
+    refresh();
+  }catch(e){ box.textContent='修复失败：'+e.message; }
+}
+
+async function loadSettings(){
+  loadUsage();
+  try{
+    const b=await (await fetch('/api/balance?force=1',{cache:'no-store'})).json();
+    if(b.ok){
+      document.getElementById('balTotal').textContent=`${b.total.toFixed(2)} ${b.currency}`;
+      document.getElementById('balDetail').textContent=`赠送 ${b.granted.toFixed(2)} · 充值 ${b.topped.toFixed(2)} · ${b.available?'账户可用':'账户不可用'}`;
+      const p=b.peak||{};
+      document.getElementById('balPeak').textContent=p.label||'—';
+      document.getElementById('balPeak').style.color=p.isPeak?'var(--warn)':'var(--ok)';
+      document.getElementById('balNext').textContent = p.nextAt ? `距下一次切换 ${Math.round(p.nextIn/60)} 分钟（${new Date(p.nextAt).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}）`:'—';
+      const r=p.rules||{};
+      document.getElementById('priceRules').innerHTML =
+        `高峰：${(r.peak||[]).map(([a,c])=>`${a}:00–${c}:00`).join('、')}（原价）<br>`+
+        `其余时段：${r.offPeakFactor??0.5} 倍价（0.5 = 半价）<br>周末全天空闲：${r.weekendOffPeak?'是':'否'} · 生效 ${r.effective||'—'}`;
+    } else {
+      document.getElementById('balTotal').textContent='读取失败';
+      document.getElementById('balDetail').textContent=b.error||'';
+    }
+  }catch(e){ document.getElementById('balDetail').textContent='余额失败：'+e.message; }
+
+  try{
+    const st=await (await fetch('/api/settings',{cache:'no-store'})).json();
+    document.getElementById('envBody').innerHTML=(st.vars||[]).map(v=>`<tr>
+      <td><code>${v.key}</code></td>
+      <td>${v.secret?`<span class="chip">${v.masked}</span>`:String(v.masked||v.value).replace(/</g,'&lt;')}</td>
+      <td><button class="act" style="padding:2px 8px" onclick="envEdit('${v.key}',${v.secret})">改</button></td></tr>`).join('');
+  }catch(e){}
+
+  try{
+    const f=await (await fetch('/api/friends',{cache:'no-store'})).json();
+    const list=Object.entries(f.list||{});
+    document.getElementById('frList').innerHTML = list.length
+      ? list.map(([uid,v])=>`<span class="chip" style="margin:3px 4px 3px 0">${(v&&v.name)||uid} · ${uid} <a href="javascript:frDel('${uid}')" style="color:var(--bad);text-decoration:none">✕</a></span>`).join('')
+      : '（空）';
+  }catch(e){}
+
+  await loadBackups();
+}
+
+async function envEdit(key,secret){
+  const cur=await (await fetch('/api/settings',{cache:'no-store'})).json();
+  const v=(cur.vars||[]).find(x=>x.key===key)||{};
+  const nv=prompt(`修改 ${key}（留空则取消）`, secret?'':(v.value||''));
+  if(nv===null||nv==='') return;
+  const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,value:nv})});
+  const j=await r.json(); toast(j.ok?'已保存，重启服务生效':j.error); loadSettings();
+}
+
+async function frAdd(){
+  const uid=document.getElementById('frUid').value.trim(), name=document.getElementById('frName').value.trim();
+  if(!uid) return toast('先填 QQ 号');
+  const r=await fetch('/api/friends',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,op:'add',name:name||uid})});
+  const j=await r.json(); if(j.ok){ document.getElementById('frUid').value=''; document.getElementById('frName').value=''; toast('已加入白名单'); loadSettings(); } else toast(j.error);
+}
+async function frDel(uid){
+  const r=await fetch('/api/friends',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,op:'del'})});
+  const j=await r.json(); if(j.ok){ toast('已移除'); loadSettings(); } else toast(j.error);
+}
+
+async function loadBackups(){
+  try{
+    const j=await (await fetch('/api/backups',{cache:'no-store'})).json();
+    document.getElementById('bkDir').textContent='存放：'+j.dir;
+    const list=j.list||[];
+    document.getElementById('bkBody').innerHTML = list.length ? list.map(b=>`<tr>
+      <td><code>${b.name}</code></td><td>${Math.round(b.size/1024)} KB</td>
+      <td>${fmtT(b.at)}</td>
+      <td><button class="act dan" style="padding:2px 8px" onclick="doRestore('${b.name}')">回滚</button></td></tr>`).join('')
+      : '<tr><td colspan="4" class="empty">还没有备份</td></tr>';
+  }catch(e){}
+}
+
+async function doBackup(){
+  toast('打包中…');
+  const r=await fetch('/api/backups',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tag:'console'})});
+  const j=await r.json();
+  toast(j.ok?`已备份 ${j.name}（${Math.round(j.size/1024)}KB）`:('失败：'+j.error));
+  loadBackups();
+}
+
+async function doRestore(name){
+  if(!confirm(`回滚到 ${name}？\n会覆盖 .env、persona、代码与 data 配置（\n回滚前会自动再备份一份当前状态）`)) return;
+  if(!confirm('真的确定回滚？')) return;
+  const r=await fetch('/api/backups',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'restore',name})});
+  const j=await r.json(); toast(j.ok?j.msg:('失败：'+j.error)); loadBackups();
+}
+
+// ---------- 防火墙 ----------
+async function loadFw(){
+  try{
+    const j=await (await fetch('/api/firewall',{cache:'no-store'})).json();
+    document.getElementById('fwStat').textContent = j.exists ? '✅ 已有放行规则' : '⚠️ 还没有放行规则（不影响本机使用）';
+  }catch(e){}
+}
+async function addFw(){
+  const st=document.getElementById('fwStat'), cmdBox=document.getElementById('fwCmd');
+  st.textContent='正在加…';
+  try{
+    const j=await (await fetch('/api/firewall',{method:'POST'})).json();
+    if(j.ok){ st.textContent='✅ 已加入白名单'; cmdBox.style.display='none'; toast('已加入防火墙白名单'); }
+    else{
+      st.textContent='❌ 需要管理员权限（当前控制台不是管理员）';
+      cmdBox.style.display='';
+      cmdBox.textContent='右键「以管理员身份运行」下面这条命令即可：\nnetsh advfirewall firewall add rule name="玉子控制台" dir=in action=allow program="D:\\DeepSeek test\\玉子软件开发\\玉子控制台.exe" enable=yes profile=any';
+      toast('需要管理员权限，看下面那条命令');
+    }
+  }catch(e){ st.textContent='失败：'+e.message; }
+}
+
+// ---------- 导航 ----------
+/* ---------------- 人格调试：记忆包 / 性格包 ---------------- */
+function b64ToArray(b64){ const bin=atob(b64); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i); return u; }
+async function fileToB64(file){
+  const buf = await file.arrayBuffer();
+  let s=''; const bytes=new Uint8Array(buf); const chunk=0x8000;
+  for(let i=0;i<bytes.length;i+=chunk) s += String.fromCharCode.apply(null, bytes.subarray(i,i+chunk));
+  return btoa(s);
+}
+async function loadMem(){
+  try{
+    const m = await (await fetch('/api/mem/stats')).json();
+    const chs = Object.entries(m.byChannel||{}).map(([k,v])=>k+' '+v).join(' · ');
+    document.getElementById('memChip').textContent = m.total + ' 条';
+    document.getElementById('memStat').innerHTML =
+      '共 <b>'+m.total+'</b> 条，原始 '+m.rawKB+'KB → 记忆包约 <b>'+m.packKB+'KB</b><br>'+
+      (m.firstAt? ('时间跨度：'+new Date(m.firstAt).toLocaleDateString()+' → '+new Date(m.lastAt).toLocaleDateString()+'<br>'):'')+
+      '渠道分布：'+(chs||'—');
+  }catch(e){ document.getElementById('memStat').textContent='读取失败：'+e.message; }
+}
+// 统一导出：先弹系统「另存为」（可自由选目录），失败就交给控制台写进导出目录
+function blobToB64(blob){
+  return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1] || ''); fr.onerror = rej; fr.readAsDataURL(blob); });
+}
+async function saveFilePick(url, name, box, okTip){
+  try{
+    box.textContent = '正在准备 ' + name + ' …';
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const b64 = await blobToB64(blob);
+    box.textContent = '请在「另存为」窗口里选位置 …';
+    const pr = await fetch('/api/save/pick', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, b64 }) });
+    const pj = await pr.json();
+    if (pj.ok){ box.textContent = '已保存到：' + pj.path; return true; }
+    if (pj.cancel){ box.textContent = '已取消保存'; return false; }
+    box.textContent = '另存为失败：' + (pj.error || '未知原因');
+    return false;
+  }catch(e){ box.textContent = '另存为失败：' + e.message; return false; }
+}
+async function saveFile(url, name, box, okTip){
+  try{
+    box.textContent = '正在准备 ' + name + ' …';
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('HTTP ' + r.status + '（' + (await r.text()).slice(0,60) + '）');
+    const blob = await r.blob();
+    const b64 = await blobToB64(blob);
+    // 直接交给控制台后端写盘（默认桌面），不经过浏览器下载，也不会被窗口权限挡住。
+    const sr = await fetch('/api/save-file', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, b64 }) });
+    const sj = await sr.json();
+    if (sj.ok){ box.textContent = '已保存到：' + sj.path + (okTip ? '（' + okTip + '）' : ''); return true; }
+    box.textContent = '保存失败：' + (sj.error || '未知原因');
+    return false;
+  }catch(e){ box.textContent = '导出失败：' + e.message; return false; }
+}
+function memExport(pick){
+  const scope = document.getElementById('memScope').value;
+  const fmt = document.getElementById('memFmt').value;
+  const names = { yzm:'玉子记忆包.yzm', docx:'玉子记忆.docx', doc:'玉子记忆.doc' };
+  const tips = { yzm:'记忆包，可回导', docx:'Word 文档，给人看', doc:'Word 文档 .doc' };
+  const url = '/api/mem/export?scope='+encodeURIComponent(scope)+'&fmt='+encodeURIComponent(fmt);
+  const box = document.getElementById('memMsg');
+  const fn = pick ? saveFilePick : saveFile;
+  fn(url, names[fmt]||'玉子记忆.yzm', box, tips[fmt]||'').then(ok => { if (ok) setTimeout(loadMem, 800); });
+}
+async function memImport(input){
+  const f = input.files && input.files[0]; if(!f) return;
+  const box = document.getElementById('memMsg');
+  box.textContent = '读取 '+f.name+' …';
+  try{
+    const data = await fileToB64(f);
+    const mode = document.getElementById('memMode').value;
+    const isPack = /\.(yzm|json|gz)$/i.test(f.name);
+    if(isPack){
+      const prev = await (await fetch('/api/mem/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})})).json();
+      if(!prev.ok) throw new Error(prev.error||'解析失败');
+      box.textContent = '包内有 '+prev.count+' 条（'+JSON.stringify(prev.byChannel)+'），正在'+mode+'导入…';
+    } else {
+      box.textContent = '正在读文档 '+f.name+'（按段落切条）…';
+    }
+    const r = await (await fetch('/api/mem/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data,mode,name:f.name})})).json();
+    if(!r.ok) throw new Error(r.error||'导入失败');
+    box.textContent = r.asDoc
+      ? ('✅ 文档导入完成：切出 '+r.paras+' 段，新增 '+r.added+' 条，重复跳过 '+r.dup+' 条，现在共 '+r.total+' 条。')
+      : ('✅ 导入完成：新增 '+r.added+' 条，重复跳过 '+r.dup+' 条，现在共 '+r.total+' 条。');
+    loadMem();
+  }catch(e){ box.textContent='❌ '+e.message; }
+  input.value='';
+}
+async function loadStyle(){
+  try{
+    const r = await (await fetch('/api/persona/style')).json();
+    const s = r.style||{};
+    document.getElementById('stName').value = s.name||'';
+    document.getElementById('stCall').value = s.callUser||'';
+    document.getElementById('stTone').value = s.tone||'';
+    document.getElementById('stLen').value = s.length||'';
+    document.getElementById('stQuirk').value = (s.quirks||[]).join('、');
+    document.getElementById('stForbid').value = (s.forbid||[]).join('、');
+    document.getElementById('stExtra').value = s.extra||'';
+    document.getElementById('stEmoji').checked = !!s.emoji;
+    document.getElementById('stBlock').textContent = r.block||'';
+    document.getElementById('perChip').textContent = '人设 '+(r.personaLen||0)+' 字';
+    document.getElementById('perHint').textContent = '当前人设正文 '+(r.personaLen||0)+' 字；风格档案已加载。';
+  }catch(e){ document.getElementById('stMsg').textContent='读取失败：'+e.message; }
+}
+async function styleSave(){
+  const body = {style:{
+    name:document.getElementById('stName').value,
+    callUser:document.getElementById('stCall').value,
+    tone:document.getElementById('stTone').value,
+    length:document.getElementById('stLen').value,
+    quirks:document.getElementById('stQuirk').value,
+    forbid:document.getElementById('stForbid').value,
+    extra:document.getElementById('stExtra').value,
+    emoji:document.getElementById('stEmoji').checked
+  }};
+  const r = await (await fetch('/api/persona/style',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).json();
+  document.getElementById('stMsg').textContent = r.ok ? '✅ 已保存。下一条消息就按新风格回（不用重启）。' : '❌ '+(r.error||'保存失败');
+  document.getElementById('stBlock').textContent = r.block||'';
+}
+async function styleReset(){
+  if(!confirm('恢复默认风格？当前设置会被覆盖（会先自动备份）。')) return;
+  const r = await (await fetch('/api/persona/style/reset',{method:'POST'})).json();
+  document.getElementById('stMsg').textContent = '已恢复默认。';
+  loadStyle();
+}
+function perExport(pick){
+  const fmt = document.getElementById('perFmt').value;
+  const names = { yzp:'玉子性格包.yzp', docx:'玉子性格包.docx', doc:'玉子性格包.doc', md:'玉子性格包.md' };
+  const url = '/api/persona/pack?fmt='+encodeURIComponent(fmt);
+  (pick ? saveFilePick : saveFile)(url, names[fmt]||'玉子性格包.yzp', document.getElementById('perMsg'), '可回导');
+}
+async function perImport(input){
+  const f = input.files && input.files[0]; if(!f) return;
+  const box = document.getElementById('perMsg');
+  box.textContent = '读取 '+f.name+' …';
+  try{
+    const data = await fileToB64(f);
+    const useAI = document.getElementById('perAI').checked;
+    const r = await (await fetch('/api/persona/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data,useAI,name:f.name})})).json();
+    if(!r.ok) throw new Error(r.error||'导入失败');
+    box.textContent = '✅ 已导入：人设 '+r.personaLen+' 字，风格'+(r.aiUsed?'（AI 分析）':'（规则推断）')+'。';
+    loadStyle();
+  }catch(e){ box.textContent='❌ '+e.message; }
+  input.value='';
+}
+
+let curPage = 'home';
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick=()=>{
+    curPage = b.dataset.page;
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    for(const p of ['home','chat','debug','plan','plugin','persona','setting'])
+      document.getElementById('page-'+p).classList.toggle('hide', p!==b.dataset.page);
+    if(b.dataset.page==='chat') loadChat(0);
+    if(b.dataset.page==='debug'){ loadDebug(); loadGroups(); }
+    if(b.dataset.page==='plan') loadPlan();
+    if(b.dataset.page==='plugin'){ loadPlugins(); loadSetup(); }
+      if(b.dataset.page==='persona'){ loadMem(); loadStyle(); }
+    if(b.dataset.page==='setting'){ loadSettings(); loadFw(); }
+  };
+});
+
+// 全局刷新：状态 + 进程 + 当前页
+async function refreshAll(){
+  await refresh();
+  await loadProcs();
+  loadLog(curLog);
+  if(curPage==='chat') loadChat(chatOffset);
+  if(curPage==='debug'){ loadDebug(); loadGroups(); }
+  if(curPage==='plan') loadPlan();
+  if(curPage==='plugin'){ loadPlugins(); loadSetup(); }
+  if(curPage==='setting') loadSettings();
+  toast('已刷新');
+}
+
+// 换一张二维码：调 NapCat WebUI 的 RefreshQRcode，不用重启
+async function openExport(){
+  try{
+    const j = await (await fetch('/api/open-export', { method:'POST' })).json();
+    toast('已打开导出目录：' + (j.dir || ''));
+  }catch(e){ toast('打不开：' + e.message); }
+}
+async function loadExportDir(){
+  try{
+    const j = await (await fetch('/api/export-dir')).json();
+    const el = document.getElementById('exportDir'); if(el && j.dir) el.textContent = j.dir;
+  }catch(e){}
+}
+async function freshQr(){
+  const msg=document.getElementById('qrMsg');
+  msg.textContent='正在换新的…';
+  try{
+    const j=await (await fetch('/api/napcat/qr',{cache:'no-store'})).json();
+    if(j.ok && j.dataUrl){
+      const img=document.getElementById('qrImg');
+      img.src=j.dataUrl; img.dataset.stamped='fresh';
+      msg.textContent='新二维码已生成 '+new Date().toLocaleTimeString('zh-CN')+'（两分钟内有效）';
+      toast('二维码已换新');
+    } else { msg.textContent='换不了：'+(j.msg||'未知原因'); toast(j.msg||'刷新失败'); }
+  }catch(e){ msg.textContent='换不了：'+e.message; }
+}
+
+refresh(); loadExportDir(); setInterval(refresh,3000);
+loadProcs(); setInterval(loadProcs, 8000);
+loadLog('boot'); setInterval(()=>{ if(curLog) loadLog(curLog); },5000);
+</script>
+</body>
+</html>
